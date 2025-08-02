@@ -1,6 +1,11 @@
 #ifndef TOKENANDLEXER_H
 #define TOKENANDLEXER_H
 
+#include <stdbool.h> 
+#include <string.h>   
+
+// ------------------- Token Types -------------------
+
 typedef enum {
     // Special
     TOKEN_ILLEGAL = 0,
@@ -28,20 +33,27 @@ typedef enum {
 
 } TokenType;
 
+// ------------------ Token Struct -------------------
+
 typedef struct {
     TokenType type;
     char* literal;
 } Token;
 
+// ----------------- Test Case Struct -----------------
+
 typedef struct {
-    TokenType expectedType;
-    char* expectedLiteral;
+    TokenType expected_type;
+    char* expected_literal;
 } Test;
+
+// ------------------- Keyword Map --------------------
 
 typedef struct {
     const char* literal;
     TokenType type;
 } Keyword;
+
 
 Keyword keywords[] = {
     {"fn", TOKEN_FUNCTION},
@@ -49,14 +61,7 @@ Keyword keywords[] = {
     {NULL, 0}  
 };
 
-TokenType lookupIdent(const char* ident) {
-    for (int i = 0; keywords[i].literal != NULL; i++) {
-        if (strcmp(keywords[i].literal, ident) == 0) {
-            return keywords[i].type;
-        }
-    }
-    return TOKEN_IDENT;  
-}
+// ------------------- Lexer Struct -------------------
 
 typedef struct {
     char* input;
@@ -65,5 +70,18 @@ typedef struct {
     int readPosition;  // "peeks" at the next ch
     int ch;
 } Lexer;
+
+// --------------- Function Prototypes ----------------
+
+// Token lookup
+TokenType lookup_ident(const char* ident);
+
+// Lexer core functions
+bool is_digit(char ch);
+bool is_letter(char ch);
+void read_char(Lexer* lexer);
+char* read_number(Lexer* lexer);
+void skip_whitespace(Lexer* lexer);
+char* slice(const char* str, int start, int end);
 
 #endif
