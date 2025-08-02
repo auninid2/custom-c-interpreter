@@ -1,5 +1,5 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#ifndef TOKENANDLEXER_H
+#define TOKENANDLEXER_H
 
 typedef enum {
     // Special
@@ -32,5 +32,18 @@ typedef struct {
     TokenType type;
     char* literal;
 } Token;
+
+typedef struct {
+    TokenType expectedType;
+    char* expectedLiteral;
+} Test;
+
+typedef struct {
+    char* input;
+    int inputLen;
+    int position;   // points to the ch currently being inspected
+    int readPosition;  // "peeks" at the next ch
+    int ch;
+} Lexer;
 
 #endif
