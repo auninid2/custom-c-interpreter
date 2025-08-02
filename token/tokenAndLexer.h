@@ -39,6 +39,26 @@ typedef struct {
 } Test;
 
 typedef struct {
+    const char* literal;
+    TokenType type;
+} Keyword;
+
+Keyword keywords[] = {
+    {"fn", TOKEN_FUNCTION},
+    {"let", TOKEN_LET},
+    {NULL, 0}  
+};
+
+TokenType lookupIdent(const char* ident) {
+    for (int i = 0; keywords[i].literal != NULL; i++) {
+        if (strcmp(keywords[i].literal, ident) == 0) {
+            return keywords[i].type;
+        }
+    }
+    return TOKEN_IDENT;  
+}
+
+typedef struct {
     char* input;
     int inputLen;
     int position;   // points to the ch currently being inspected

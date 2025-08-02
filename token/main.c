@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "tokenAndLexer.h"
 
-// reads the next char and advances the position in the input string
+// reads current char and advances the position in the input string
 void readChar(Lexer* l) {
     if (l->readPosition >= l->inputLen) {
         l->ch = 0;
@@ -17,7 +18,45 @@ void readChar(Lexer* l) {
     l->readPosition++;
 }
 
+bool isDigit(char ch) {
+    return '0' <= ch && ch <= '9'; 
+}
 
+bool isLetter(char ch) {
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '_');
+}
+
+
+char* realIdentifier(Lexer* l) {
+    int start = l->position;
+
+    if (!isLetter(l->ch)) {
+        return NULL;
+    }
+
+    readChar(l);
+
+    while (l->position < l->inputLen && (isLetter(l->ch) || isDigit(l->ch))) {
+        readChar(l);
+    }
+
+    int length = l->position - start;
+    if (length <= 0) {
+        return NULL;
+    }
+
+    char* ident = malloc(length + 1);
+    if (ident == NULL) {
+        return NULL;
+    }
+
+    memcpy(ident, l->input + start, length);
+    ident[length] = '\0';
+    return ident;
+}
+
+
+// initializies a new lexical analyzer and copies the input string into the lexers memory
 Lexer* newLexer(const char* input) {
     Lexer* l = (Lexer*)malloc(sizeof(Lexer));
     if (l == NULL) return NULL;
@@ -50,8 +89,33 @@ Token newToken(TokenType type, const char* literal) {
     return token;
 }
 
+char* slice(const char* str, int start, int end) {
+    if (end <= start) return NULL;
+    int length = end - start;
+    char* substr = malloc(length + 1);
+    if (!substr) return NULL;
+    memcpy(substr, str + start, length);
+    substr[length] = '\0';
+    return substr;
+}
+
+void skipWhitespace(Lexer* l) {
+    while(l->ch == ' ' || l->ch == '\t' || l->ch == '\n' || l->ch == '\r') {
+        readChar(l);
+    }
+}
+
+char* readNumber(Lexer* l) {
+    int start = l->position;
+    while (isDigit(l->ch)) {
+        readChar(l);
+    }
+    return slice(l->input, start, l->position);
+}
+
 Token nextToken(Lexer* l) {
     Token token;
+    skipWhitespace(l);
 
     switch (l->ch) {
         case '=':
@@ -82,7 +146,20 @@ Token nextToken(Lexer* l) {
             token = newToken(TOKEN_EOF, "");
             break;
         default:
-            token = newToken(TOKEN_ILLEGAL, "");
+            if (isLetter(l->ch)) {
+                token.literal = realIdentifier(l);
+                token.type = lookupIdent(token.literal); 
+                return token;
+            }
+            else if (isDigit(l->ch)) {
+                token.type = TOKEN_INT;
+                token.literal = readNumber(l);
+                return token;
+            }
+            else {
+                char illegalLiteral[2] = { l->ch, '\0' };
+                token = newToken(TOKEN_ILLEGAL, illegalLiteral);
+            }
             break;
     }
 
@@ -90,25 +167,66 @@ Token nextToken(Lexer* l) {
     return token;
 }
 
-void testNextToken() {
-    const char* input = "=+(){},;";
+int main(void) {
+        const char* input = 
+        "let five = 5;\n"
+        "let ten = 10;\n"
+        "\n"
+        "let add = fn(x, y) {\n"
+        "    x + y;\n"
+        "};\n"
+        "\n"
+        "let result = add(five, ten);\n";
 
     Test tests[] = {
+        {TOKEN_LET, "let"},
+        {TOKEN_IDENT, "five"},
         {TOKEN_ASSIGN, "="},
-        {TOKEN_PLUS, "+"},
-        {TOKEN_LPAREN, "("},
-        {TOKEN_RPAREN, ")"},
-        {TOKEN_LBRACE, "{"},
-        {TOKEN_RBRACE, "}"},
-        {TOKEN_COMMA, ","},
+        {TOKEN_INT, "5"},
         {TOKEN_SEMICOLON, ";"},
+
+        {TOKEN_LET, "let"},
+        {TOKEN_IDENT, "ten"},
+        {TOKEN_ASSIGN, "="},
+        {TOKEN_INT, "10"},
+        {TOKEN_SEMICOLON, ";"},
+
+        {TOKEN_LET, "let"},
+        {TOKEN_IDENT, "add"},
+        {TOKEN_ASSIGN, "="},
+        {TOKEN_FUNCTION, "fn"},
+        {TOKEN_LPAREN, "("},
+        {TOKEN_IDENT, "x"},
+        {TOKEN_COMMA, ","},
+        {TOKEN_IDENT, "y"},
+        {TOKEN_RPAREN, ")"},
+
+        {TOKEN_LBRACE, "{"},
+        {TOKEN_IDENT, "x"},
+        {TOKEN_PLUS, "+"},
+        {TOKEN_IDENT, "y"},
+        {TOKEN_SEMICOLON, ";"},
+        {TOKEN_RBRACE, "}"},
+        {TOKEN_SEMICOLON, ";"},
+
+        {TOKEN_LET, "let"},
+        {TOKEN_IDENT, "result"},
+        {TOKEN_ASSIGN, "="},
+        {TOKEN_IDENT, "add"},
+        {TOKEN_LPAREN, "("},
+        {TOKEN_IDENT, "five"},
+        {TOKEN_COMMA, ","},
+        {TOKEN_IDENT, "ten"},
+        {TOKEN_RPAREN, ")"},
+        {TOKEN_SEMICOLON, ";"},
+
         {TOKEN_EOF, ""},
     };
 
     Lexer* lexer = newLexer(input);
     if (lexer == NULL) {
         printf("Failed to create lexer\n");
-        return;
+        return 0;
     }
 
     int numTests = sizeof(tests) / sizeof(tests[0]);
@@ -143,9 +261,6 @@ void testNextToken() {
 
     free(lexer->input);
     free(lexer);
-}
 
-int main(void) {
-    testNextToken();
     return 0;
 }
