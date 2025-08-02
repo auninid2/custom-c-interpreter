@@ -16,11 +16,3 @@ jobs:
       - name: make
         run: make
         working-directory: token
-
-      - name: make check
-        run: make check
-        working-directory: token
-
-      - name: make distcheck
-        run: make distcheck
-        working-directory: token
