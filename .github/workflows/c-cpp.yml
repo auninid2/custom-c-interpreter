@@ -1,18 +1,24 @@
-name: C/C++ CI
+name: C Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: make
+      - name: Install build tools
+        run: sudo apt update && sudo apt install -y build-essential
+
+      - name: Build project
         run: make
-        working-directory: token
+
+      - name: Run the compiler
+        run: ./compiler < test_input.txt || true  # or adjust to your app’s usage
