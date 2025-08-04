@@ -1,48 +1,11 @@
-#define _POSIX_C_SOURCE 200809L
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
-#include "token_and_lexer.h"
-#include "helper_functions.h"
-#include "test_inputs.h"
-
-// Extracts an identifier starting at current lexer position
-// Returns a newly allocated string or NULL on failure
-char *real_identifier(Lexer *lexer) {
-    int start = lexer->position;
-
-    if (!is_letter(lexer->ch)) {
-        return NULL;
-    }
-
-    read_char(lexer);
-
-    while (lexer->position < lexer->inputLen && 
-           (is_letter(lexer->ch) || is_digit(lexer->ch))) {
-        read_char(lexer);
-    }
-
-    int length = lexer->position - start;
-    if (length <= 0) {
-        return NULL;
-    }
-
-    char *ident = malloc(length + 1);
-    if (ident == NULL) {
-        return NULL;
-    }
-
-    memcpy(ident, lexer->input + start, length);
-    ident[length] = '\0';
-
-    return ident;
-}
+#include "lexer.h"
 
 // Initializes a new Lexer and copies input string
-Lexer *new_lexer(const char *input) {
+Lexer* new_lexer(const char *input) {
     Lexer *lexer = malloc(sizeof(Lexer));
     if (lexer == NULL) {
         return NULL;
@@ -63,17 +26,16 @@ Lexer *new_lexer(const char *input) {
     return lexer;
 }
 
-// Creates a new token with given type and literal string
-Token new_token(TokenType type, const char *literal) {
-    Token token;
-    token.type = type;
-
-    token.literal = strdup(literal);
-    if (token.literal == NULL) {
-        token.literal = "";
+// Reads the next character from input, advancing lexer's position
+void read_char(Lexer* lexer) {
+    if (lexer->readPosition >= lexer->inputLen) {
+        lexer->ch = 0;  // EOF marker
+    } else {
+        lexer->ch = lexer->input[lexer->readPosition];
     }
 
-    return token;
+    lexer->position = lexer->readPosition;
+    lexer->readPosition++;
 }
 
 // Returns the next token from the lexer input
@@ -158,46 +120,105 @@ Token next_token(Lexer *lexer) {
     return token;
 }
 
-int main(void) {
-    Lexer *lexer = new_lexer(input);
-    if (lexer == NULL) {
-        printf("Failed to create lexer\n");
-        return 1;
+// Creates a new token with given type and literal string
+Token new_token(TokenType type, const char *literal) {
+    Token token;
+    token.type = type;
+
+    token.literal = strdup(literal);
+    if (token.literal == NULL) {
+        token.literal = "";
     }
 
-    int num_tests = sizeof(tests) / sizeof(tests[0]);
-    bool all_passed = true;
+    return token;
+}
 
-    for (int i = 0; i < num_tests; i++) {
-        Token tok = next_token(lexer);
-        bool failed = false;
+// Extracts an identifier starting at current lexer position
+// Returns a newly allocated string or NULL on failure
+char *real_identifier(Lexer *lexer) {
+    int start = lexer->position;
 
-        if (tok.type != tests[i].expected_type) {
-            printf("Test %d failed: expected token type %d, got %d\n",
-                   i, tests[i].expected_type, tok.type);
-            failed = true;
-        }
-
-        if (strcmp(tok.literal, tests[i].expected_literal) != 0) {
-            printf("Test %d failed: expected literal '%s', got '%s'\n",
-                   i, tests[i].expected_literal, tok.literal);
-            failed = true;
-        }
-
-        if (failed) {
-            printf("\n");
-            all_passed = false;
-        }
-
-        free(tok.literal);
+    if (!is_letter(lexer->ch)) {
+        return NULL;
     }
 
-    if (all_passed) {
-        printf("All tests passed!\n");
+    read_char(lexer);
+
+    while (lexer->position < lexer->inputLen && 
+           (is_letter(lexer->ch) || is_digit(lexer->ch))) {
+        read_char(lexer);
     }
 
-    free(lexer->input);
-    free(lexer);
+    int length = lexer->position - start;
+    if (length <= 0) {
+        return NULL;
+    }
 
-    return 0;
+    char *ident = malloc(length + 1);
+    if (ident == NULL) {
+        return NULL;
+    }
+
+    memcpy(ident, lexer->input + start, length);
+    ident[length] = '\0';
+
+    return ident;
+}
+
+// Checks if a character is a digit (0-9)
+bool is_digit(char ch) {
+    return (ch >= '0' && ch <= '9'); 
+}
+
+// Checks if a character is a letter (a-z, A-Z) or underscore
+bool is_letter(char ch) {
+    return (ch >= 'a' && ch <= 'z') || 
+           (ch >= 'A' && ch <= 'Z') || 
+           (ch == '_');
+}
+
+// Skips whitespace characters in the input stream
+void skip_whitespace(Lexer* lexer) {
+    while (lexer->ch == ' ' || lexer->ch == '\t' || 
+           lexer->ch == '\n' || lexer->ch == '\r') {
+        read_char(lexer);
+    }
+}
+
+// Reads a sequence of digits and returns it as a newly allocated string
+char* read_number(Lexer* lexer) {
+    int start = lexer->position;
+
+    while (is_digit(lexer->ch)) {
+        read_char(lexer);
+    }
+
+    return slice(lexer->input, start, lexer->position);
+}
+
+char peek_char(Lexer* lexer) {
+    if (lexer->readPosition >= lexer->inputLen) {
+        return 0;  // EOF marker
+    } else {
+        return lexer->input[lexer->readPosition];
+    }
+}
+
+// Returns a newly allocated substring from str[start] to str[end-1]
+// Returns NULL if end <= start or on malloc failure
+char* slice(const char* str, int start, int end) {
+    if (end <= start) {
+        return NULL;
+    }
+
+    int length = end - start;
+    char* substr = malloc(length + 1);
+    if (!substr) {
+        return NULL;
+    }
+
+    memcpy(substr, str + start, length);
+    substr[length] = '\0';
+
+    return substr;
 }
