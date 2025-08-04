@@ -54,16 +54,7 @@ typedef struct {
     TokenType type;
 } Keyword;
 
-static Keyword keywords[] = {
-    {"fn", TOKEN_FUNCTION},
-    {"let", TOKEN_LET},
-    {"else", TOKEN_ELSE},
-    {"if", TOKEN_IF},
-    {"return", TOKEN_RETURN},
-    {"true", TOKEN_TRUE},
-    {"false", TOKEN_FALSE},
-    {NULL, 0}
-};
+extern Keyword keywords[]; 
 
 TokenType lookup_ident(const char* ident);
 const char* token_type_to_string(TokenType type);
