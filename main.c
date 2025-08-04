@@ -1,6 +1,7 @@
 #include "lexer/lexer_test.c"
+#include "repl/repl.h"
 
 int main(void) {
-    test_next_token();
+    start_repl();
     return 0;
 }

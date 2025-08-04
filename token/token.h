@@ -65,13 +65,7 @@ static Keyword keywords[] = {
     {NULL, 0}
 };
 
-static TokenType lookup_ident(const char* ident) {
-    for (int i = 0; keywords[i].literal != NULL; i++) {
-        if (strcmp(keywords[i].literal, ident) == 0) {
-            return keywords[i].type;
-        }
-    }
-    return TOKEN_IDENT;
-}
+TokenType lookup_ident(const char* ident);
+const char* token_type_to_string(TokenType type);
 
 #endif
