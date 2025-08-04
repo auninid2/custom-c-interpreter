@@ -21,4 +21,4 @@ jobs:
         run: make
 
       - name: Run the compiler
-        run: ./compiler < test_input.txt || true  # or adjust to your app’s usage
+        run: ./compiler < test_input.txt || true 
