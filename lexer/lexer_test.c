@@ -119,7 +119,7 @@ Test tests[] = {
     {TOKEN_INT, "10"},
     {TOKEN_NOT_EQ, "!="},
     {TOKEN_INT, "9"},
-    {TOKEN_SEMICOLON, ";"},
+    {TOKEN_SEMICOLON, "-"},
     
     {TOKEN_EOF, ""}
 };
