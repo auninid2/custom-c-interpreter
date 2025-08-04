@@ -78,4 +78,12 @@ TokenType lookup_ident(const char* ident) {
     return TOKEN_IDENT;  
 }
 
+char peek_char(Lexer* lexer) {
+    if (lexer->readPosition >= lexer->inputLen) {
+        return 0;  // EOF marker
+    } else {
+        return lexer->input[lexer->readPosition];
+    }
+}
+
 #endif

@@ -18,6 +18,15 @@ typedef enum {
     // Operators
     TOKEN_ASSIGN = '=',
     TOKEN_PLUS   = '+',
+    TOKEN_MINUS = '-',
+    TOKEN_BANG = '!',
+    TOKEN_ASTERISK = '*',
+    TOKEN_SLASH = '/',
+    TOKEN_EQ,
+    TOKEN_NOT_EQ = '!=',
+    
+    TOKEN_LT = '<',
+    TOKEN_GT = '>', 
 
     // Delimiters
     TOKEN_COMMA     = ',',
@@ -29,7 +38,12 @@ typedef enum {
 
     // Keywords
     TOKEN_FUNCTION,
-    TOKEN_LET
+    TOKEN_LET,
+    TOKEN_ELSE,
+    TOKEN_IF,
+    TOKEN_RETURN,
+    TOKEN_TRUE,
+    TOKEN_FALSE
 
 } TokenType;
 
@@ -58,6 +72,11 @@ typedef struct {
 Keyword keywords[] = {
     {"fn", TOKEN_FUNCTION},
     {"let", TOKEN_LET},
+    {"else", TOKEN_ELSE},
+    {"if", TOKEN_IF},
+    {"return", TOKEN_RETURN},
+    {"true", TOKEN_TRUE},
+    {"false", TOKEN_FALSE},
     {NULL, 0}  
 };
 

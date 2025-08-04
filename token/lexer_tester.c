@@ -84,7 +84,12 @@ Token next_token(Lexer *lexer) {
 
     switch (lexer->ch) {
         case '=':
-            token = new_token(TOKEN_ASSIGN, "=");
+            if (peek_char(lexer) == '=') {
+                read_char(lexer);  
+                token = new_token(TOKEN_EQ, "==");
+            } else {
+                token = new_token(TOKEN_ASSIGN, "=");
+            }
             break;
         case ';':
             token = new_token(TOKEN_SEMICOLON, ";");
@@ -100,6 +105,29 @@ Token next_token(Lexer *lexer) {
             break;
         case '+':
             token = new_token(TOKEN_PLUS, "+");
+            break;
+        case '-':
+            token = new_token(TOKEN_MINUS, "-");    
+            break;
+        case '!':
+            if (peek_char(lexer) == '=') {
+                read_char(lexer);  
+                token = new_token(TOKEN_NOT_EQ, "!=");
+            } else {
+                token = new_token(TOKEN_BANG, "!");
+            }
+            break;
+        case '*':
+            token = new_token(TOKEN_ASTERISK, "*");
+            break;
+        case '/':
+            token = new_token(TOKEN_SLASH, "/");    
+            break;
+        case '<':
+            token = new_token(TOKEN_LT, "<");
+            break;
+        case '>':
+            token = new_token(TOKEN_GT, ">");
             break;
         case '{':
             token = new_token(TOKEN_LBRACE, "{");

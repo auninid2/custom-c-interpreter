@@ -1,14 +1,16 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
-SRC = lexer_tester.c
-TARGET = interpreter
+CFLAGS = -Wall -Wextra -std=c99 -g
+TARGET = lexer_tester
+
+.PHONY: all run clean
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+$(TARGET): lexer_tester.c
+	$(CC) $(CFLAGS) lexer_tester.c -o $(TARGET)
 
-run: $(TARGET)
+run: 
+	$(CC) $(CFLAGS) lexer_tester.c -o $(TARGET)
 	./$(TARGET)
 
 clean:
