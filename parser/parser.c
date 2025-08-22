@@ -6,11 +6,7 @@
 #include "../ast/ast.h"
 #include "parser.h"
 
-void parser_next_token(Parser* p) {
-    p->cur_token = p->peek_token;
-    p->peek_token = next_token(p->l);
-}
-
+// initializes a new lexer
 Parser* parser_new(Lexer* l) {
     Parser* p = malloc(sizeof(Parser));
     if (!p) return NULL;
@@ -80,10 +76,12 @@ void check_parser_errors(Parser* p) {
     exit(1);
 }
 
-static Node* parser_parse_statement(Parser* p) {
+Node* parser_parse_statement(Parser* p) {
     switch (p->cur_token.type) {
         case TOKEN_LET:
             return parser_parse_let_statement(p);
+        case TOKEN_RETURN:
+            return parser_parse_return_statement(p);
         default:
             return NULL;
     }
@@ -134,6 +132,11 @@ static int parser_cur_token_is(Parser* p, TokenType t) {
     return p->cur_token.type == t;
 }
 
+void parser_next_token(Parser* p) {
+    p->cur_token = p->peek_token;
+    p->peek_token = next_token(p->l);
+}
+
 static int parser_peek_token_is(Parser* p, TokenType t) {
     return p->peek_token.type == t;
 }
@@ -160,4 +163,24 @@ void parser_free_errors(Parser* p) {
     free(p->errors);
     p->errors = NULL;
     p->error_count = 0;
+}
+
+Node* parser_parse_return_statement(Parser* p) {
+    // Allocate ReturnStatement node
+    Node* stmt = malloc(sizeof(Node));
+    if (!stmt) return NULL;
+
+    stmt->type = NODE_RETURN_STATEMENT;
+    stmt->token = p->cur_token;  // store "return" token
+
+    // move to next token (the beginning of return value expression, which we skip)
+    parser_next_token(p);
+
+    while (!parser_cur_token_is(p, TOKEN_SEMICOLON)) {
+        parser_next_token(p);
+    }
+
+    stmt->as.return_statement.return_value = NULL;
+
+    return stmt;
 }

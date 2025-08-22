@@ -22,6 +22,10 @@ typedef struct Node {
             struct Node* value;
         } let_statement;
 
+        struct {
+            struct Node* return_value;
+        } return_statement;
+
         struct {               
             char* value;       
         } identifier;
@@ -37,8 +41,10 @@ typedef struct {
     int count;
 } Program;
 
+
 const char* program_token_literal(Program* p);
 const char* let_statement_token_literal(const Statement* s);
 const char* identifier_token_literal(const Expression* e);
+const char* return_statement_token_literal(Node* rs);
 
 #endif 

@@ -23,5 +23,6 @@ static int parser_cur_token_is(Parser* p, TokenType t);
 static int parser_peek_token_is(Parser* p, TokenType t);
 static int parser_expect_peek(Parser* p, TokenType t);
 static void parser_peek_error(Parser* p, TokenType t);
+Node* parser_parse_return_statement(Parser* p);
 
 #endif

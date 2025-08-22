@@ -14,3 +14,7 @@ const char* let_statement_token_literal(const Statement* s) {
 const char* identifier_token_literal(const Expression* e) {
     return e->token.literal;
 }
+
+const char* return_statement_token_literal(Node* rs) {
+    return rs->token.literal;
+}
