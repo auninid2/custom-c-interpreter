@@ -23,12 +23,11 @@ Parser* parser_new(Lexer* l) {
 }
 
 static Node* parser_parse_let_statement(Parser* p) {
-    // Allocate LetStatement node
     Node* stmt = malloc(sizeof(Node));
     if (!stmt) return NULL;
 
     stmt->type = NODE_LET_STATEMENT;
-    stmt->token = p->cur_token;  // store "let" token
+    stmt->token = p->cur_token; 
 
     if (!parser_expect_peek(p, TOKEN_IDENT)) {
         free(stmt);
@@ -47,7 +46,6 @@ static Node* parser_parse_let_statement(Parser* p) {
 
     stmt->as.let_statement.name = ident;
 
-    // expect '='
     if (!parser_expect_peek(p, TOKEN_ASSIGN)) {
         free(ident->as.identifier.value);
         free(ident);
@@ -55,7 +53,6 @@ static Node* parser_parse_let_statement(Parser* p) {
         return NULL;
     }
 
-    // TODO: skip expression until we see a semicolon
     while (!parser_cur_token_is(p, TOKEN_SEMICOLON)) {
         parser_next_token(p);
     }
@@ -166,14 +163,12 @@ void parser_free_errors(Parser* p) {
 }
 
 Node* parser_parse_return_statement(Parser* p) {
-    // Allocate ReturnStatement node
     Node* stmt = malloc(sizeof(Node));
     if (!stmt) return NULL;
 
     stmt->type = NODE_RETURN_STATEMENT;
-    stmt->token = p->cur_token;  // store "return" token
+    stmt->token = p->cur_token; 
 
-    // move to next token (the beginning of return value expression, which we skip)
     parser_next_token(p);
 
     while (!parser_cur_token_is(p, TOKEN_SEMICOLON)) {
