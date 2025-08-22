@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
 #include "../ast/ast.h"
 #include "../token/token.h"
+
+void check_parser_errors(Parser* p);
 
 // helper: check a let statement
 static int test_let_statement(Node* stmt, const char* expected_name) {
@@ -35,14 +38,16 @@ static int test_let_statement(Node* stmt, const char* expected_name) {
 
 int main() {
     const char* input =
-        "let x = 5;\n"
-        "let y = 10;\n"
-        "let foobar = 838383;\n";
+        "let x 5;\n"
+        "let = 10;\n"
+        "let 838383;\n";
 
     Lexer* l = new_lexer(input);
     Parser* p = parser_new(l);
 
     Program* program = parser_parse_program(p);
+    check_parser_errors(p);
+
     if (program == NULL) {
         printf("FAIL: ParseProgram() returned NULL\n");
         return 1;

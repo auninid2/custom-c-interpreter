@@ -1,30 +1,27 @@
+#include <stdio.h>   
+#include <stdlib.h>  
+#include <string.h> 
+
 #include "../lexer/lexer.h"
 #include "../ast/ast.h"
 #include "parser.h"
-#include <stdlib.h>
 
-static int parser_cur_token_is(Parser* p, TokenType t);
-static int parser_peek_token_is(Parser* p, TokenType t);
-static int parser_expect_peek(Parser* p, TokenType t);
-static Node* parser_parse_statement(Parser* p);
-static Node* parser_parse_let_statement(Parser* p);
-
-// nextToken(): advance tokens
 void parser_next_token(Parser* p) {
     p->cur_token = p->peek_token;
     p->peek_token = next_token(p->l);
 }
 
-// constructor: allocate + init parser
 Parser* parser_new(Lexer* l) {
     Parser* p = malloc(sizeof(Parser));
     if (!p) return NULL;
 
     p->l = l;
 
-    // Initialize tokens by advancing twice
     p->cur_token = next_token(l);
     p->peek_token = next_token(l);
+
+    p->errors = NULL;
+    p->error_count = 0;
 
     return p;
 }
@@ -37,18 +34,17 @@ static Node* parser_parse_let_statement(Parser* p) {
     stmt->type = NODE_LET_STATEMENT;
     stmt->token = p->cur_token;  // store "let" token
 
-    // expect identifier
     if (!parser_expect_peek(p, TOKEN_IDENT)) {
         free(stmt);
         return NULL;
     }
 
-    // build identifier node for Name
     Node* ident = malloc(sizeof(Node));
     if (!ident) {
         free(stmt);
         return NULL;
     }
+
     ident->type = NODE_IDENTIFIER;
     ident->token = p->cur_token;
     ident->as.identifier.value = strdup(p->cur_token.literal);
@@ -57,7 +53,6 @@ static Node* parser_parse_let_statement(Parser* p) {
 
     // expect '='
     if (!parser_expect_peek(p, TOKEN_ASSIGN)) {
-        // cleanup
         free(ident->as.identifier.value);
         free(ident);
         free(stmt);
@@ -69,28 +64,20 @@ static Node* parser_parse_let_statement(Parser* p) {
         parser_next_token(p);
     }
 
-    stmt->as.let_statement.value = NULL; // for now, not parsing expressions
+    stmt->as.let_statement.value = NULL; 
 
     return stmt;
 }
 
-// -------------------
-// helpers
-// -------------------
-static int parser_cur_token_is(Parser* p, TokenType t) {
-    return p->cur_token.type == t;
-}
+void check_parser_errors(Parser* p) {
+    if (p->error_count == 0) return;
 
-static int parser_peek_token_is(Parser* p, TokenType t) {
-    return p->peek_token.type == t;
-}
-
-static int parser_expect_peek(Parser* p, TokenType t) {
-    if (parser_peek_token_is(p, t)) {
-        parser_next_token(p);
-        return 1;
+    printf("parser has %d error(s):\n", p->error_count);
+    for (int i = 0; i < p->error_count; i++) {
+        printf("  parser error: %s\n", p->errors[i]);
     }
-    return 0;
+
+    exit(1);
 }
 
 static Node* parser_parse_statement(Parser* p) {
@@ -124,4 +111,53 @@ Program* parser_parse_program(Parser* p) {
     }
 
     return program;
+}
+
+static void parser_peek_error(Parser* p, TokenType t) {
+    const char* expected = token_type_to_string(t);
+    const char* got = token_type_to_string(p->peek_token.type);
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "expected next token to be %s, got %s instead",
+             expected, got);
+
+    p->errors = realloc(p->errors, sizeof(char*) * (p->error_count + 1));
+    p->errors[p->error_count] = strdup(buffer);
+    p->error_count++;
+}
+
+// -------------------
+// helpers
+// -------------------
+static int parser_cur_token_is(Parser* p, TokenType t) {
+    return p->cur_token.type == t;
+}
+
+static int parser_peek_token_is(Parser* p, TokenType t) {
+    return p->peek_token.type == t;
+}
+
+static int parser_expect_peek(Parser* p, TokenType t) {
+    if (parser_peek_token_is(p, t)) {
+        parser_next_token(p);
+        return 1;
+    } else {
+        parser_peek_error(p, t);
+        return 0;
+    }
+}
+
+char** parser_errors(Parser* p, int* out_count) {
+    *out_count = p->error_count;
+    return p->errors;
+}
+
+void parser_free_errors(Parser* p) {
+    for (int i = 0; i < p->error_count; i++) {
+        free(p->errors[i]);
+    }
+    free(p->errors);
+    p->errors = NULL;
+    p->error_count = 0;
 }
