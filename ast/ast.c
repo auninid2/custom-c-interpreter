@@ -1,32 +1,16 @@
 #include "ast.h"
 
-// Node interface
-struct Node {
-    // function pointer for TokenLiteral method
-    const char* (*TokenLiteral)(void* self);  // like a virtual method
-};
-
-// Statement interface extends Node
-struct Statement {
-    Node node;  // "inherits" from Node
-    void (*statementNode)(void* self);  // marker
-};
-
-// Expression interface extends Node
-struct Expression {
-    Node node;
-    void (*expressionNode)(void* self);  // marker
-};
-
-struct Program {
-    Statement** statements;  // array of pointers to Statement
-    int statement_count;
-};
-
-char* token_literal(Program* p) {
-    if (strlen(p->statements) > 0) {
-        return p->statements[0]->node.TokenLiteral(p->statements[0]);
-    } else {
-        return "";
+const char* program_token_literal(Program* p) {
+    if (p->count > 0) {
+        return p->statements[0]->token.literal;
     }
+    return "";
+}
+
+const char* let_statement_token_literal(const Statement* s) {
+    return s->token.literal;
+}
+
+const char* identifier_token_literal(const Expression* e) {
+    return e->token.literal;
 }
