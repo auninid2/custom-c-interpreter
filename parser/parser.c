@@ -6,7 +6,6 @@
 #include "../ast/ast.h"
 #include "parser.h"
 
-// initializes a new lexer
 Parser* parser_new(Lexer* l) {
     Parser* p = malloc(sizeof(Parser));
     if (!p) return NULL;
@@ -122,9 +121,9 @@ static void parser_peek_error(Parser* p, TokenType t) {
     p->error_count++;
 }
 
-// -------------------
-// helpers
-// -------------------
+// -------------------------------
+// ---------- helpers ------------
+// -------------------------------
 static int parser_cur_token_is(Parser* p, TokenType t) {
     return p->cur_token.type == t;
 }

@@ -45,13 +45,11 @@ typedef struct {
     int count;
 } Program;
 
-
 const char* program_token_literal(Program* p);
 const char* let_statement_token_literal(const Statement* s);
 const char* identifier_token_literal(const Expression* e);
 const char* return_statement_token_literal(Node* rs);
 char* program_string(Program* p);
 char* node_string(Node* n);
-
 
 #endif 

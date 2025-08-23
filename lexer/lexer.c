@@ -28,10 +28,9 @@ Lexer* new_lexer(const char *input) {
     return lexer;
 }
 
-// Reads the next character from input, advancing lexer's position
 void read_char(Lexer* lexer) {
     if (lexer->readPosition >= lexer->inputLen) {
-        lexer->ch = 0;  // EOF marker
+        lexer->ch = 0; 
     } else {
         lexer->ch = lexer->input[lexer->readPosition];
     }
@@ -40,7 +39,6 @@ void read_char(Lexer* lexer) {
     lexer->readPosition++;
 }
 
-// Returns the next token from the lexer input
 Token next_token(Lexer *lexer) {
     Token token;
 
@@ -122,7 +120,6 @@ Token next_token(Lexer *lexer) {
     return token;
 }
 
-// Creates a new token with given type and literal string
 Token new_token(TokenType type, const char *literal) {
     Token token;
     token.type = type;
@@ -167,19 +164,16 @@ char *real_identifier(Lexer *lexer) {
     return ident;
 }
 
-// Checks if a character is a digit (0-9)
 bool is_digit(char ch) {
     return (ch >= '0' && ch <= '9'); 
 }
 
-// Checks if a character is a letter (a-z, A-Z) or underscore
 bool is_letter(char ch) {
     return (ch >= 'a' && ch <= 'z') || 
            (ch >= 'A' && ch <= 'Z') || 
            (ch == '_');
 }
 
-// Skips whitespace characters in the input stream
 void skip_whitespace(Lexer* lexer) {
     while (lexer->ch == ' ' || lexer->ch == '\t' || 
            lexer->ch == '\n' || lexer->ch == '\r') {
@@ -200,7 +194,7 @@ char* read_number(Lexer* lexer) {
 
 char peek_char(Lexer* lexer) {
     if (lexer->readPosition >= lexer->inputLen) {
-        return 0;  // EOF marker
+        return 0; 
     } else {
         return lexer->input[lexer->readPosition];
     }

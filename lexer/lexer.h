@@ -22,7 +22,7 @@ bool is_digit(char ch);
 bool is_letter(char ch);
 char* read_number(Lexer *lexer);
 char* slice(const char* str, int start, int end);
-Lexer* new_lexer(const char* input);   // Add this declaration
+Lexer* new_lexer(const char* input);
 extern TokenType lookup_ident(const char* ident);
 
 #endif
