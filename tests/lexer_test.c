@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "../token/token.h"
-#include "lexer.h"
+#include "../lexer/lexer.h"
 
 typedef struct {
     TokenType expected_type;
