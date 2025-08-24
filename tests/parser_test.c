@@ -7,93 +7,66 @@
 #include "../ast/ast.h"
 #include "../token/token.h"
 
-void check_parser_errors(Parser* p);
+// -------------------------------
+// ---- macros for assertion -----
+// -------------------------------
+#define ASSERT(cond, msg) \
+    do { \
+        if (!(cond)) { \
+            fprintf(stderr, "FAIL: %s\n", msg); \
+            exit(EXIT_FAILURE); \
+        } \
+    } while (0)
 
-// ----------------------
-// helper: check let stmt
-// ----------------------
-static int test_let_statement(Node* stmt, const char* expected_name) {
-    if (stmt->type != NODE_LET_STATEMENT) {
-        printf("FAIL: statement not NODE_LET_STATEMENT. got=%d\n", stmt->type);
-        return 0;
-    }
+// -------------------------------
+// ---------- helpers  -----------
+// -------------------------------
+static Program* parse_input(const char* input) {
+    Lexer* l = new_lexer(input);
+    Parser* p = parser_new(l);
+    Program* program = parser_parse_program(p);
+    check_parser_errors(p);
 
-    if (strcmp(stmt->token.literal, "let") != 0) {
-        printf("FAIL: stmt->token.literal not 'let'. got=%s\n", stmt->token.literal);
-        return 0;
-    }
-
-    Node* ident = stmt->as.let_statement.name;
-    if (ident->type != NODE_IDENTIFIER) {
-        printf("FAIL: name is not NODE_IDENTIFIER. got=%d\n", ident->type);
-        return 0;
-    }
-
-    if (strcmp(ident->as.identifier.value, expected_name) != 0) {
-        printf("FAIL: identifier name wrong. expected=%s, got=%s\n",
-               expected_name, ident->as.identifier.value);
-        return 0;
-    }
-
-    return 1;
+    ASSERT(program != NULL, "ParseProgram() returned NULL");
+    return program;
 }
 
-// -------------------------
-// helper: check return stmt
-// -------------------------
-static int test_return_statement(Node* stmt) {
-    if (stmt->type != NODE_RETURN_STATEMENT) {
-        printf("FAIL: statement not NODE_RETURN_STATEMENT. got=%d\n", stmt->type);
-        return 0;
-    }
-
-    if (strcmp(stmt->token.literal, "return") != 0) {
-        printf("FAIL: stmt->token.literal not 'return'. got=%s\n", stmt->token.literal);
-        return 0;
-    }
-
-    if (stmt->as.return_statement.return_value != NULL) {
-        printf("FAIL: return value not NULL (expressions not parsed yet)\n");
-        return 0;
-    }
-
-    return 1;
+static void assert_stmt_type(Node* stmt, NodeType expected, const char* msg) {
+    ASSERT(stmt->type == expected, msg);
 }
 
-// ----------------------
-// tests
-// ----------------------
+static void assert_identifier(Node* ident, const char* expected_name) {
+    assert_stmt_type(ident, NODE_IDENTIFIER, "node is not Identifier");
+    ASSERT(strcmp(ident->as.identifier.value, expected_name) == 0, "identifier name mismatch");
+}
+
+static void check_program_count(Program* program, int expected) {
+    ASSERT(program->count == expected, "program.Statements count mismatch");
+}
+
+// -------------------------------
+// ----------- tests -------------
+// -------------------------------
 static void test_let_statements() {
     const char* input =
         "let x = 5;\n"
         "let y = 10;\n"
         "let foobar = 838383;\n";
 
-    Lexer* l = new_lexer(input);
-    Parser* p = parser_new(l);
-    Program* program = parser_parse_program(p);
-    check_parser_errors(p);
-
-    if (program == NULL) {
-        printf("FAIL: ParseProgram() returned NULL\n");
-        exit(1);
-    }
-
-    if (program->count != 3) {
-        printf("FAIL: program.Statements does not contain 3 statements. got=%d\n",
-               program->count);
-        exit(1);
-    }
+    Program* program = parse_input(input);
+    check_program_count(program, 3);
 
     const char* expected_identifiers[] = {"x", "y", "foobar"};
 
     for (int i = 0; i < 3; i++) {
-        if (!test_let_statement(program->statements[i], expected_identifiers[i])) {
-            exit(1);
-        }
+        Node* stmt = program->statements[i];
+        assert_stmt_type(stmt, NODE_LET_STATEMENT, "statement not NODE_LET_STATEMENT");
+        ASSERT(strcmp(stmt->token.literal, "let") == 0, "stmt->token.literal not 'let'");
+        Node* ident = stmt->as.let_statement.name;
+        assert_identifier(ident, expected_identifiers[i]);
     }
 
-    printf("test_let_statements passed!\n");
+    printf("PASS: test_let_statements\n");
 }
 
 static void test_return_statements() {
@@ -102,37 +75,44 @@ static void test_return_statements() {
         "return 10;\n"
         "return 993322;\n";
 
-    Lexer* l = new_lexer(input);
-    Parser* p = parser_new(l);
-    Program* program = parser_parse_program(p);
-    check_parser_errors(p);
-
-    if (program == NULL) {
-        printf("FAIL: ParseProgram() returned NULL\n");
-        exit(1);
-    }
-
-    if (program->count != 3) {
-        printf("FAIL: program.Statements does not contain 3 statements. got=%d\n",
-               program->count);
-        exit(1);
-    }
+    Program* program = parse_input(input);
+    check_program_count(program, 3);
 
     for (int i = 0; i < 3; i++) {
-        if (!test_return_statement(program->statements[i])) {
-            exit(1);
-        }
+        Node* stmt = program->statements[i];
+        assert_stmt_type(stmt, NODE_RETURN_STATEMENT, "statement not NODE_RETURN_STATEMENT");
+        ASSERT(strcmp(stmt->token.literal, "return") == 0, "stmt->token.literal not 'return'");
+        ASSERT(stmt->as.return_statement.return_value == NULL, "return value not NULL");
     }
 
-    printf("test_return_statements passed!\n");
+    printf("PASS: test_return_statements\n");
 }
 
-// ----------------------
-// main
-// ----------------------
-int main() {
-    test_let_statements();
-    test_return_statements();
-    printf("ALL TESTS PASSED\n");
-    return 0;
+static void test_identifier_expression() {
+    const char* input = "foobar;";
+
+    Program* program = parse_input(input);
+    check_program_count(program, 1);
+
+    Node* stmt = program->statements[0];
+    assert_stmt_type(stmt, NODE_EXPRESSION_STATEMENT, "program.Statements[0] is not ExpressionStatement");
+
+    Node* expr = stmt->as.expression_statement.expression;
+    assert_identifier(expr, "foobar");
+
+    ASSERT(strcmp(identifier_token_literal(expr), "foobar") == 0,
+           "ident.TokenLiteral not foobar");
+
+    printf("PASS: test_identifier_expression\n");
+}
+
+typedef void (*TestFn)(void);
+
+int main() { 
+    test_let_statements(); 
+    test_return_statements(); 
+    test_identifier_expression(); 
+    
+    printf("ALL TESTS PASSED\n"); 
+    return 0; 
 }

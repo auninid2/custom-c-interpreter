@@ -1,3 +1,4 @@
 compiler.exe
 compiler
 test_ast.exe
+parser_test.exe

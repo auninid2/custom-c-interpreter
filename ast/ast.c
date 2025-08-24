@@ -2,29 +2,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ast.h"
+
 // -------------------------------
 // -- token_literal() functions --
 // -------------------------------
-// These functions return the literal string of the first token associated with a node
-// Mainly used for debugging and testing the AST
-
 const char* program_token_literal(Program* p) {
-    if (p->count > 0) {
-        return p->statements[0]->token.literal;
-    }
-    return "";
+    return (p->count > 0) ? p->statements[0]->token.literal : "";
 }
 
 const char* let_statement_token_literal(const Statement* s) {
     return s->token.literal;
 }
 
-const char* identifier_token_literal(const Expression* e) {
-    return e->token.literal;
-}
-
 const char* return_statement_token_literal(Node* rs) {
     return rs->token.literal;
+}
+
+const char* identifier_token_literal(const Expression* e) {
+    return e->token.literal;
 }
 
 const char* expression_statement_token_literal(Node* es) {
@@ -32,34 +27,26 @@ const char* expression_statement_token_literal(Node* es) {
 }
 
 // -------------------------------
-// ------ string() functions -----
+// ------- string helpers --------
 // -------------------------------
-// These functions generate a human-readable string representation of AST nodes
-// Useful for debugging and writing tests
-// They recursively build strings for child nodes and return heap-allocated strings
-
-// Build a single string representing the entire program by concatenating the string of each statement.
-char* program_string(Program* p) {
-    size_t bufsize = 1; 
-    char* result = malloc(bufsize);
-    result[0] = '\0';
-
-    for (int i = 0; i < p->count; i++) {
-        char* stmt_str = node_string(p->statements[i]); 
-        size_t newsize = bufsize + strlen(stmt_str);
-        result = realloc(result, newsize);
-        strcat(result, stmt_str);
-        bufsize = newsize;
-        free(stmt_str);
-    }
-
-    return result;
+static char* strdup_safe(const char* str) {
+    return str ? strdup(str) : strdup("");
 }
 
-// Builds a string for a LetStatement: "let <name> = <value>;"
-static char* let_statement_string(Node* n) {    
+static char* concat_strings(const char* a, const char* b) {
+    size_t len = strlen(a) + strlen(b) + 1;
+    char* out = malloc(len);
+    if (!out) exit(1);
+    snprintf(out, len, "%s%s", a, b);
+    return out;
+}
+
+// -------------------------------
+// ---- node-specific string -----
+// -------------------------------
+static char* let_statement_string(Node* n) {
     char* name_str = node_string(n->as.let_statement.name);
-    char* value_str = n->as.let_statement.value ? node_string(n->as.let_statement.value) : strdup("");
+    char* value_str = n->as.let_statement.value ? node_string(n->as.let_statement.value) : strdup_safe("");
 
     size_t size = strlen(n->token.literal) + 1 + strlen(name_str) + 3 + strlen(value_str) + 2;
     char* out = malloc(size);
@@ -70,9 +57,8 @@ static char* let_statement_string(Node* n) {
     return out;
 }
 
-// Builds a string for a ReturnStatement: "return <value>;"
-static char* return_statement_string(Node* n) {   
-    char* val_str = n->as.return_statement.return_value ? node_string(n->as.return_statement.return_value) : strdup("");
+static char* return_statement_string(Node* n) {
+    char* val_str = n->as.return_statement.return_value ? node_string(n->as.return_statement.return_value) : strdup_safe("");
 
     size_t size = strlen(n->token.literal) + 1 + strlen(val_str) + 2;
     char* out = malloc(size);
@@ -82,34 +68,43 @@ static char* return_statement_string(Node* n) {
     return out;
 }
 
-// Builds a string for an ExpressionStatement.
 static char* expression_statement_string(Node* n) {
-    if (n->as.expression_statement.expression) {
-        return node_string(n->as.expression_statement.expression);
-    }
-    return strdup("");
+    return n->as.expression_statement.expression ? node_string(n->as.expression_statement.expression) : strdup_safe("");
 }
 
-// Returns a copy of the identifier's value.
 static char* identifier_string(Node* n) {
-    return strdup(n->as.identifier.value);
+    return strdup_safe(n->as.identifier.value);
 }
 
 // -------------------------------
 // ---- node_string dispatcher ---
 // -------------------------------
-// Goes to the correct string-building function based on node type
 char* node_string(Node* n) {
     switch (n->type) {
-        case NODE_LET_STATEMENT:
-            return let_statement_string(n);
-        case NODE_RETURN_STATEMENT:
-            return return_statement_string(n);
-        case NODE_EXPRESSION_STATEMENT:
-            return expression_statement_string(n);
-        case NODE_IDENTIFIER:
-            return identifier_string(n);
-        default:
-            return strdup("");  
+        case NODE_LET_STATEMENT:        return let_statement_string(n);
+        case NODE_RETURN_STATEMENT:     return return_statement_string(n);
+        case NODE_EXPRESSION_STATEMENT: return expression_statement_string(n);
+        case NODE_IDENTIFIER:           return identifier_string(n);
+        default:                        return strdup_safe("");
     }
+}
+
+// -------------------------------
+// ------- program_string --------
+// -------------------------------
+char* program_string(Program* p) {
+    size_t bufsize = 1;
+    char* result = malloc(bufsize);
+    if (!result) exit(1);
+    result[0] = '\0';
+
+    for (int i = 0; i < p->count; i++) {
+        char* stmt_str = node_string(p->statements[i]);
+        char* tmp = concat_strings(result, stmt_str);
+        free(result);
+        free(stmt_str);
+        result = tmp;
+    }
+
+    return result;
 }

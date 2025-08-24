@@ -40,8 +40,9 @@ typedef enum {
     TOKEN_IF,
     TOKEN_RETURN,
     TOKEN_TRUE,
-    TOKEN_FALSE
+    TOKEN_FALSE,
 
+    TOKEN_LAST
 } TokenType;
 
 typedef struct {

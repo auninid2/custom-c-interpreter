@@ -35,13 +35,8 @@ int main(void) {
     program.statements = malloc(sizeof(Statement*));
     program.statements[0] = let_stmt;
 
-    // Get program string
     char* out = program_string(&program);
-
-    // Assert
     assert(strcmp(out, "let myVar = anotherVar;") == 0);
-
-    // Print to confirm
     printf("Program.String() = %s\n", out);
 
     // Cleanup

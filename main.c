@@ -1,5 +1,4 @@
-#include "lexer/lexer_test.c"
-#include "repl/repl.h"
+#include "../repl/repl.c"
 
 int main(void) {
     start_repl();
